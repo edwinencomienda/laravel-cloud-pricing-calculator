@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Laravel Cloud Price Calculator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+
+        .calculator {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        label {
+            display: block;
+            margin: 10px 0 5px;
+            font-weight: bold;
+        }
+
+        select,
+        input[type="number"] {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        #result {
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background-color: #f9f9f9;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Laravel Cloud Price Calculator</h1>
+    <div class="calculator">
+        <label for="plan">Select Plan:</label>
+        <select id="plan">
+            <option value="sandbox">SandBox ($0/month)</option>
+            <option value="production">Production ($20/month)</option>
+            <option value="business">Business ($200/month, Coming Soon)</option>
+        </select>
+
+        <label for="users">Additional Users (SandBox fixed at 3):</label>
+        <input type="number" id="users" min="0" value="0" placeholder="Enter additional users">
+
+        <label for="computeClass">Compute Class:</label>
+        <select id="computeClass">
+            <option value="flex">Flex (Lightweight)</option>
+            <option value="pro">Pro (Heavy Utilization)</option>
+        </select>
+
+        <label for="computeSize">Compute Size:</label>
+        <select id="computeSize">
+            <!-- Flex Options -->
+            <option value="flex-1-256" data-hourly="0.0067">Flex: 1 CPU, 256MB RAM ($0.0067/hr)</option>
+            <option value="flex-1-512" data-hourly="0.0088">Flex: 1 CPU, 512MB RAM ($0.0088/hr)</option>
+            <option value="flex-1-1gb" data-hourly="0.0139">Flex: 1 CPU, 1GB RAM ($0.0139/hr)</option>
+            <option value="flex-2-512" data-hourly="0.0134">Flex: 2 CPU, 512MB RAM ($0.0134/hr)</option>
+            <option value="flex-2-1gb" data-hourly="0.0176">Flex: 2 CPU, 1GB RAM ($0.0176/hr)</option>
+            <option value="flex-2-2gb" data-hourly="0.0278">Flex: 2 CPU, 2GB RAM ($0.0278/hr)</option>
+            <option value="flex-4-1gb" data-hourly="0.0268">Flex: 4 CPU, 1GB RAM ($0.0268/hr)</option>
+            <option value="flex-4-2gb" data-hourly="0.0352">Flex: 4 CPU, 2GB RAM ($0.0352/hr)</option>
+            <option value="flex-4-4gb" data-hourly="0.0556">Flex: 4 CPU, 4GB RAM ($0.0556/hr)</option>
+            <option value="flex-8-2gb" data-hourly="0.0536">Flex: 8 CPU, 2GB RAM ($0.0536/hr)</option>
+            <option value="flex-8-4gb" data-hourly="0.0704">Flex: 8 CPU, 4GB RAM ($0.0704/hr)</option>
+            <option value="flex-8-8gb" data-hourly="0.1112">Flex: 8 CPU, 8GB RAM ($0.1112/hr)</option>
+            <!-- Pro Options -->
+            <option value="pro-1-1gb" data-hourly="0.0267">Pro: 1 CPU, 1GB RAM ($0.0267/hr)</option>
+            <option value="pro-1-2gb" data-hourly="0.0352">Pro: 1 CPU, 2GB RAM ($0.0352/hr)</option>
+            <option value="pro-1-4gb" data-hourly="0.0556">Pro: 1 CPU, 4GB RAM ($0.0556/hr)</option>
+            <option value="pro-2-2gb" data-hourly="0.0534">Pro: 2 CPU, 2GB RAM ($0.0534/hr)</option>
+            <option value="pro-2-4gb" data-hourly="0.0704">Pro: 2 CPU, 4GB RAM ($0.0704/hr)</option>
+            <option value="pro-2-8gb" data-hourly="0.1112">Pro: 2 CPU, 8GB RAM ($0.1112/hr)</option>
+            <option value="pro-4-4gb" data-hourly="0.1068">Pro: 4 CPU, 4GB RAM ($0.1068/hr)</option>
+            <option value="pro-4-8gb" data-hourly="0.1408">Pro: 4 CPU, 8GB RAM ($0.1408/hr)</option>
+            <option value="pro-4-16gb" data-hourly="0.2224">Pro: 4 CPU, 16GB RAM ($0.2224/hr)</option>
+            <option value="pro-8-8gb" data-hourly="0.2136">Pro: 8 CPU, 8GB RAM ($0.2136/hr)</option>
+            <option value="pro-8-16gb" data-hourly="0.2816">Pro: 8 CPU, 16GB RAM ($0.2816/hr)</option>
+            <option value="pro-8-32gb" data-hourly="0.4448">Pro: 8 CPU, 32GB RAM ($0.4448/hr)</option>
+        </select>
+
+        <label for="computeHours">Compute Hours/Month (Max 730):</label>
+        <input type="number" id="computeHours" min="0" max="730" value="730" placeholder="Hours per month">
+
+        <label for="dataOverage">Data Transfer Overage (GB):</label>
+        <input type="number" id="dataOverage" min="0" value="0" placeholder="Excess GB beyond plan">
+
+        <label for="requestOverage">Request Overage (Millions):</label>
+        <input type="number" id="requestOverage" min="0" value="0" step="0.1" placeholder="Excess millions beyond plan">
+
+        <div id="result"></div>
+    </div>
+
+    <script>
+        function calculateCost() {
+            const plan = document.getElementById('plan').value;
+            const users = parseInt(document.getElementById('users').value) || 0;
+            const computeClass = document.getElementById('computeClass').value;
+            const computeSize = document.getElementById('computeSize');
+            const computeHours = parseFloat(document.getElementById('computeHours').value) || 0;
+            const dataOverage = parseFloat(document.getElementById('dataOverage').value) || 0;
+            const requestOverage = parseFloat(document.getElementById('requestOverage').value) || 0;
+
+            // Base costs
+            let baseCost = 0;
+            let userLimit = 0;
+            if (plan === 'sandbox') {
+                baseCost = 0;
+                userLimit = 3; // Fixed at 3, no additional users allowed
+            } else if (plan === 'production') {
+                baseCost = 20;
+                userLimit = 3;
+            } else if (plan === 'business') {
+                baseCost = 200;
+                userLimit = 10;
+            }
+
+            // User cost
+            let userCost = 0;
+            if (plan !== 'sandbox') {
+                const extraUsers = Math.max(0, users - userLimit);
+                userCost = extraUsers * 10;
+            } else if (users > 0) {
+                alert('SandBox plan is fixed at 3 users. Additional users not allowed.');
+                document.getElementById('users').value = 0; // Reset to 0
+                userCost = 0;
+            }
+
+            // Compute cost
+            const hourlyRate = parseFloat(computeSize.options[computeSize.selectedIndex].dataset.hourly);
+            const computeCost = hourlyRate * computeHours;
+
+            // Overage costs
+            const dataCost = dataOverage * 0.10; // $0.10 per GB
+            const requestCost = requestOverage * 1; // $1 per million requests
+
+            // Total cost
+            const totalCost = baseCost + userCost + computeCost + dataCost + requestCost;
+
+            // Display result
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = `
+                <h3>Cost Breakdown</h3>
+                <p>Base Plan: $${baseCost.toFixed(2)}</p>
+                <p>Additional Users: $${userCost.toFixed(2)}</p>
+                <p>Compute Cost (${computeHours} hrs): $${computeCost.toFixed(2)}</p>
+                <p>Data Overage (${dataOverage} GB): $${dataCost.toFixed(2)}</p>
+                <p>Request Overage (${requestOverage}M): $${requestCost.toFixed(2)}</p>
+                <p><strong>Total Monthly Cost: $${totalCost.toFixed(2)}</strong></p>
+            `;
+        }
+
+        // Add event listeners to all inputs for auto-calculation
+        const inputs = document.querySelectorAll('select, input');
+        inputs.forEach(input => {
+            input.addEventListener('change', calculateCost);
+            input.addEventListener('input', calculateCost); // For number inputs
+        });
+
+        // Initial calculation on page load
+        window.onload = calculateCost;
+    </script>
+</body>
+
+</html>
