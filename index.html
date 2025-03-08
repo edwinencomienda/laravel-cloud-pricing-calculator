@@ -57,7 +57,6 @@
             margin-bottom: 20px;
             font-weight: bold;
             text-align: center;
-            border: 1px solid #ffeeba;
         }
 
         .reference {
@@ -82,15 +81,16 @@
 <body>
     <h1>Laravel Cloud Price Calculator</h1>
     <div class="disclaimer">
-        This is an unofficial calculator and is not affiliated with or endorsed by the Laravel team.
+        This is an unofficial calculator and is not affiliated with or endorsed by the Laravel team. Calculations may be
+        inaccurate.
     </div>
     <div class="calculator">
         <label for="region">Select Region:</label>
         <select id="region">
-            <option value="us-east-2">US East (Ohio)</option>
-            <option value="eu-west-2">EU West (London)</option>
-            <option value="eu-central-1">EU Central (Frankfurt)</option>
-            <option value="ap-southeast-1">Asia Pacific (Singapore)</option>
+            <option value="us-east-2">US – Ohio</option>
+            <option value="eu-central-1">EU – Frankfurt</option>
+            <option value="eu-west-2">EU – London</option>
+            <option value="ap-southeast-1">AP – Singapore</option>
         </select>
 
         <label for="plan">Select Plan:</label>
@@ -111,7 +111,7 @@
 
         <label for="computeSize">Compute Size:</label>
         <select id="computeSize">
-            <!-- Flex Options -->
+            <!-- Flex Options (using US – Ohio as base, adjusted dynamically) -->
             <option value="flex-1-256" data-hourly="0.0067">Flex: 1 CPU, 256MB RAM ($0.0067/hr)</option>
             <option value="flex-1-512" data-hourly="0.0088">Flex: 1 CPU, 512MB RAM ($0.0088/hr)</option>
             <option value="flex-1-1gb" data-hourly="0.0139">Flex: 1 CPU, 1GB RAM ($0.0139/hr)</option>
@@ -124,7 +124,7 @@
             <option value="flex-8-2gb" data-hourly="0.0536">Flex: 8 CPU, 2GB RAM ($0.0536/hr)</option>
             <option value="flex-8-4gb" data-hourly="0.0704">Flex: 8 CPU, 4GB RAM ($0.0704/hr)</option>
             <option value="flex-8-8gb" data-hourly="0.1112">Flex: 8 CPU, 8GB RAM ($0.1112/hr)</option>
-            <!-- Pro Options -->
+            <!-- Pro Options (using US – Ohio as base, adjusted dynamically) -->
             <option value="pro-1-1gb" data-hourly="0.0267">Pro: 1 CPU, 1GB RAM ($0.0267/hr)</option>
             <option value="pro-1-2gb" data-hourly="0.0352">Pro: 1 CPU, 2GB RAM ($0.0352/hr)</option>
             <option value="pro-1-4gb" data-hourly="0.0556">Pro: 1 CPU, 4GB RAM ($0.0556/hr)</option>
@@ -152,6 +152,7 @@
 
         <div class="reference">
             Pricing data sourced from <a href="https://cloud.laravel.com/docs/pricing" target="_blank">Laravel Cloud
+                Pricing</a>
         </div>
     </div>
 
@@ -165,12 +166,120 @@
             const dataOverage = parseFloat(document.getElementById('dataOverage').value) || 0;
             const requestOverage = parseFloat(document.getElementById('requestOverage').value) || 0;
 
-            // Region multipliers (estimated; replace with actual values if available)
-            const regionMultipliers = {
-                'us-east-2': 1.0,      // Base pricing
-                'eu-west-2': 1.1,      // 10% higher
-                'eu-central-1': 1.1,   // 10% higher
-                'ap-southeast-1': 1.1  // 10% higher
+            // Pricing table per region (hourly rates)
+            const pricingTable = {
+                'us-east-2': { // US – Ohio
+                    'flex-1-256': 0.0067,
+                    'flex-1-512': 0.0088,
+                    'flex-1-1gb': 0.0139,
+                    'flex-2-512': 0.0134,
+                    'flex-2-1gb': 0.0176,
+                    'flex-2-2gb': 0.0278,
+                    'flex-4-1gb': 0.0268,
+                    'flex-4-2gb': 0.0352,
+                    'flex-4-4gb': 0.0556,
+                    'flex-8-2gb': 0.0536,
+                    'flex-8-4gb': 0.0704,
+                    'flex-8-8gb': 0.1112,
+                    'pro-1-1gb': 0.0267,
+                    'pro-1-2gb': 0.0352,
+                    'pro-1-4gb': 0.0556,
+                    'pro-2-2gb': 0.0534,
+                    'pro-2-4gb': 0.0704,
+                    'pro-2-8gb': 0.1112,
+                    'pro-4-4gb': 0.1068,
+                    'pro-4-8gb': 0.1408,
+                    'pro-4-16gb': 0.2224,
+                    'pro-8-8gb': 0.2136,
+                    'pro-8-16gb': 0.2816,
+                    'pro-8-32gb': 0.4448
+                },
+                'eu-central-1': { // EU – Frankfurt
+                    'flex-1-256': 0.0076,
+                    'flex-1-512': 0.0105,
+                    'flex-1-1gb': 0.0168,
+                    'flex-2-512': 0.0152,
+                    'flex-2-1gb': 0.0210,
+                    'flex-2-2gb': 0.0336,
+                    'flex-4-1gb': 0.0304,
+                    'flex-4-2gb': 0.0420,
+                    'flex-4-4gb': 0.0672,
+                    'flex-8-2gb': 0.0608,
+                    'flex-8-4gb': 0.0840,
+                    'flex-8-8gb': 0.1344,
+                    'pro-1-1gb': 0.0305,
+                    'pro-1-2gb': 0.0422,
+                    'pro-1-4gb': 0.0671,
+                    'pro-2-2gb': 0.0610,
+                    'pro-2-4gb': 0.0844,
+                    'pro-2-8gb': 0.1342,
+                    'pro-4-4gb': 0.1220,
+                    'pro-4-8gb': 0.1688,
+                    'pro-4-16gb': 0.2684,
+                    'pro-8-8gb': 0.2440,
+                    'pro-8-16gb': 0.3376,
+                    'pro-8-32gb': 0.5368
+                },
+                'eu-west-2': { // EU – London
+                    'flex-1-256': 0.0072,
+                    'flex-1-512': 0.0093,
+                    'flex-1-1gb': 0.0148,
+                    'flex-2-512': 0.0144,
+                    'flex-2-1gb': 0.0186,
+                    'flex-2-2gb': 0.0296,
+                    'flex-4-1gb': 0.0288,
+                    'flex-4-2gb': 0.0372,
+                    'flex-4-4gb': 0.0592,
+                    'flex-8-2gb': 0.0576,
+                    'flex-8-4gb': 0.0744,
+                    'flex-8-8gb': 0.1184,
+                    'pro-1-1gb': 0.0288,
+                    'pro-1-2gb': 0.0370,
+                    'pro-1-4gb': 0.0594,
+                    'pro-2-2gb': 0.0576,
+                    'pro-2-4gb': 0.0740,
+                    'pro-2-8gb': 0.1188,
+                    'pro-4-4gb': 0.1152,
+                    'pro-4-8gb': 0.1480,
+                    'pro-4-16gb': 0.2376,
+                    'pro-8-8gb': 0.2304,
+                    'pro-8-16gb': 0.2960,
+                    'pro-8-32gb': 0.4752
+                },
+                'ap-southeast-1': { // AP – Singapore
+                    'flex-1-256': 0.0070,
+                    'flex-1-512': 0.0100,
+                    'flex-1-1gb': 0.0152,
+                    'flex-2-512': 0.0140,
+                    'flex-2-1gb': 0.0200,
+                    'flex-2-2gb': 0.0304,
+                    'flex-4-1gb': 0.0280,
+                    'flex-4-2gb': 0.0400,
+                    'flex-4-4gb': 0.0608,
+                    'flex-8-2gb': 0.0560,
+                    'flex-8-4gb': 0.0800,
+                    'flex-8-8gb': 0.1216,
+                    'pro-1-1gb': 0.0280,
+                    'pro-1-2gb': 0.0400,
+                    'pro-1-4gb': 0.0610,
+                    'pro-2-2gb': 0.0560,
+                    'pro-2-4gb': 0.0800,
+                    'pro-2-8gb': 0.1220,
+                    'pro-4-4gb': 0.1120,
+                    'pro-4-8gb': 0.1600,
+                    'pro-4-16gb': 0.2440,
+                    'pro-8-8gb': 0.2240,
+                    'pro-8-16gb': 0.3200,
+                    'pro-8-32gb': 0.4880
+                }
+            };
+
+            // Map region codes to display names
+            const regionDisplayNames = {
+                'us-east-2': 'US – Ohio',
+                'eu-central-1': 'EU – Frankfurt',
+                'eu-west-2': 'EU – London',
+                'ap-southeast-1': 'AP – Singapore'
             };
 
             // Base plan costs
@@ -199,10 +308,9 @@
             }
 
             // Compute cost with region adjustment
-            const baseHourlyRate = parseFloat(computeSize.options[computeSize.selectedIndex].dataset.hourly);
-            const regionMultiplier = regionMultipliers[region];
-            const adjustedHourlyRate = baseHourlyRate * regionMultiplier;
-            const computeCost = adjustedHourlyRate * computeHours;
+            const selectedComputeSize = computeSize.value;
+            const hourlyRate = pricingTable[region][selectedComputeSize] || 0;
+            const computeCost = hourlyRate * computeHours;
 
             // Overage costs
             const dataCost = dataOverage * 0.10; // $0.10 per GB
@@ -217,7 +325,7 @@
                 <h3>Cost Breakdown</h3>
                 <p>Base Plan: $${baseCost.toFixed(2)}</p>
                 <p>Additional Users: $${userCost.toFixed(2)}</p>
-                <p>Compute Cost (${computeHours} hrs in ${region}): $${computeCost.toFixed(2)}</p>
+                <p>Compute Cost (${computeHours} hrs in ${regionDisplayNames[region]}): $${computeCost.toFixed(2)}</p>
                 <p>Data Overage (${dataOverage} GB): $${dataCost.toFixed(2)}</p>
                 <p>Request Overage (${requestOverage}M): $${requestCost.toFixed(2)}</p>
                 <p><strong>Total Monthly Cost: $${totalCost.toFixed(2)}</strong></p>
