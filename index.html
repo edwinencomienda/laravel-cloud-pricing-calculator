@@ -19,16 +19,6 @@
             color: #333;
         }
 
-        .disclaimer {
-            text-align: center;
-            color: #666;
-            margin-bottom: 20px;
-            padding: 10px;
-            background-color: #fff3cd;
-            border: 1px solid #ffeeba;
-            border-radius: 4px;
-        }
-
         .calculator {
             background: white;
             padding: 20px;
@@ -58,6 +48,34 @@
             border-radius: 4px;
             background-color: #f9f9f9;
         }
+
+        .disclaimer {
+            background-color: #fff3cd;
+            color: #856404;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-weight: bold;
+            text-align: center;
+            border: 1px solid #ffeeba;
+        }
+
+        .reference {
+            margin-top: 20px;
+            padding: 10px;
+            text-align: center;
+            font-size: 0.9em;
+            color: #555;
+        }
+
+        .reference a {
+            color: #0066cc;
+            text-decoration: none;
+        }
+
+        .reference a:hover {
+            text-decoration: underline;
+        }
     </style>
 </head>
 
@@ -67,6 +85,14 @@
         This is an unofficial calculator and is not affiliated with or endorsed by the Laravel team.
     </div>
     <div class="calculator">
+        <label for="region">Select Region:</label>
+        <select id="region">
+            <option value="us-east-2">US East (Ohio)</option>
+            <option value="eu-west-2">EU West (London)</option>
+            <option value="eu-central-1">EU Central (Frankfurt)</option>
+            <option value="ap-southeast-1">Asia Pacific (Singapore)</option>
+        </select>
+
         <label for="plan">Select Plan:</label>
         <select id="plan">
             <option value="sandbox">SandBox ($0/month)</option>
@@ -123,24 +149,36 @@
         <input type="number" id="requestOverage" min="0" value="0" step="0.1" placeholder="Excess millions beyond plan">
 
         <div id="result"></div>
+
+        <div class="reference">
+            Pricing data sourced from <a href="https://cloud.laravel.com/docs/pricing" target="_blank">Laravel Cloud
+        </div>
     </div>
 
     <script>
         function calculateCost() {
+            const region = document.getElementById('region').value;
             const plan = document.getElementById('plan').value;
             const users = parseInt(document.getElementById('users').value) || 0;
-            const computeClass = document.getElementById('computeClass').value;
             const computeSize = document.getElementById('computeSize');
             const computeHours = parseFloat(document.getElementById('computeHours').value) || 0;
             const dataOverage = parseFloat(document.getElementById('dataOverage').value) || 0;
             const requestOverage = parseFloat(document.getElementById('requestOverage').value) || 0;
 
-            // Base costs
+            // Region multipliers (estimated; replace with actual values if available)
+            const regionMultipliers = {
+                'us-east-2': 1.0,      // Base pricing
+                'eu-west-2': 1.1,      // 10% higher
+                'eu-central-1': 1.1,   // 10% higher
+                'ap-southeast-1': 1.1  // 10% higher
+            };
+
+            // Base plan costs
             let baseCost = 0;
             let userLimit = 0;
             if (plan === 'sandbox') {
                 baseCost = 0;
-                userLimit = 3; // Fixed at 3, no additional users allowed
+                userLimit = 3;
             } else if (plan === 'production') {
                 baseCost = 20;
                 userLimit = 3;
@@ -156,13 +194,15 @@
                 userCost = extraUsers * 10;
             } else if (users > 0) {
                 alert('SandBox plan is fixed at 3 users. Additional users not allowed.');
-                document.getElementById('users').value = 0; // Reset to 0
+                document.getElementById('users').value = 0;
                 userCost = 0;
             }
 
-            // Compute cost
-            const hourlyRate = parseFloat(computeSize.options[computeSize.selectedIndex].dataset.hourly);
-            const computeCost = hourlyRate * computeHours;
+            // Compute cost with region adjustment
+            const baseHourlyRate = parseFloat(computeSize.options[computeSize.selectedIndex].dataset.hourly);
+            const regionMultiplier = regionMultipliers[region];
+            const adjustedHourlyRate = baseHourlyRate * regionMultiplier;
+            const computeCost = adjustedHourlyRate * computeHours;
 
             // Overage costs
             const dataCost = dataOverage * 0.10; // $0.10 per GB
@@ -177,18 +217,18 @@
                 <h3>Cost Breakdown</h3>
                 <p>Base Plan: $${baseCost.toFixed(2)}</p>
                 <p>Additional Users: $${userCost.toFixed(2)}</p>
-                <p>Compute Cost (${computeHours} hrs): $${computeCost.toFixed(2)}</p>
+                <p>Compute Cost (${computeHours} hrs in ${region}): $${computeCost.toFixed(2)}</p>
                 <p>Data Overage (${dataOverage} GB): $${dataCost.toFixed(2)}</p>
                 <p>Request Overage (${requestOverage}M): $${requestCost.toFixed(2)}</p>
                 <p><strong>Total Monthly Cost: $${totalCost.toFixed(2)}</strong></p>
             `;
         }
 
-        // Add event listeners to all inputs for auto-calculation
+        // Add event listeners for auto-calculation
         const inputs = document.querySelectorAll('select, input');
         inputs.forEach(input => {
             input.addEventListener('change', calculateCost);
-            input.addEventListener('input', calculateCost); // For number inputs
+            input.addEventListener('input', calculateCost);
         });
 
         // Initial calculation on page load
