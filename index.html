@@ -111,32 +111,7 @@
 
         <label for="computeSize">Compute Size:</label>
         <select id="computeSize">
-            <!-- Flex Options (using US – Ohio as base, adjusted dynamically) -->
-            <option value="flex-1-256" data-hourly="0.0067">Flex: 1 CPU, 256MB RAM ($0.0067/hr)</option>
-            <option value="flex-1-512" data-hourly="0.0088">Flex: 1 CPU, 512MB RAM ($0.0088/hr)</option>
-            <option value="flex-1-1gb" data-hourly="0.0139">Flex: 1 CPU, 1GB RAM ($0.0139/hr)</option>
-            <option value="flex-2-512" data-hourly="0.0134">Flex: 2 CPU, 512MB RAM ($0.0134/hr)</option>
-            <option value="flex-2-1gb" data-hourly="0.0176">Flex: 2 CPU, 1GB RAM ($0.0176/hr)</option>
-            <option value="flex-2-2gb" data-hourly="0.0278">Flex: 2 CPU, 2GB RAM ($0.0278/hr)</option>
-            <option value="flex-4-1gb" data-hourly="0.0268">Flex: 4 CPU, 1GB RAM ($0.0268/hr)</option>
-            <option value="flex-4-2gb" data-hourly="0.0352">Flex: 4 CPU, 2GB RAM ($0.0352/hr)</option>
-            <option value="flex-4-4gb" data-hourly="0.0556">Flex: 4 CPU, 4GB RAM ($0.0556/hr)</option>
-            <option value="flex-8-2gb" data-hourly="0.0536">Flex: 8 CPU, 2GB RAM ($0.0536/hr)</option>
-            <option value="flex-8-4gb" data-hourly="0.0704">Flex: 8 CPU, 4GB RAM ($0.0704/hr)</option>
-            <option value="flex-8-8gb" data-hourly="0.1112">Flex: 8 CPU, 8GB RAM ($0.1112/hr)</option>
-            <!-- Pro Options (using US – Ohio as base, adjusted dynamically) -->
-            <option value="pro-1-1gb" data-hourly="0.0267">Pro: 1 CPU, 1GB RAM ($0.0267/hr)</option>
-            <option value="pro-1-2gb" data-hourly="0.0352">Pro: 1 CPU, 2GB RAM ($0.0352/hr)</option>
-            <option value="pro-1-4gb" data-hourly="0.0556">Pro: 1 CPU, 4GB RAM ($0.0556/hr)</option>
-            <option value="pro-2-2gb" data-hourly="0.0534">Pro: 2 CPU, 2GB RAM ($0.0534/hr)</option>
-            <option value="pro-2-4gb" data-hourly="0.0704">Pro: 2 CPU, 4GB RAM ($0.0704/hr)</option>
-            <option value="pro-2-8gb" data-hourly="0.1112">Pro: 2 CPU, 8GB RAM ($0.1112/hr)</option>
-            <option value="pro-4-4gb" data-hourly="0.1068">Pro: 4 CPU, 4GB RAM ($0.1068/hr)</option>
-            <option value="pro-4-8gb" data-hourly="0.1408">Pro: 4 CPU, 8GB RAM ($0.1408/hr)</option>
-            <option value="pro-4-16gb" data-hourly="0.2224">Pro: 4 CPU, 16GB RAM ($0.2224/hr)</option>
-            <option value="pro-8-8gb" data-hourly="0.2136">Pro: 8 CPU, 8GB RAM ($0.2136/hr)</option>
-            <option value="pro-8-16gb" data-hourly="0.2816">Pro: 8 CPU, 16GB RAM ($0.2816/hr)</option>
-            <option value="pro-8-32gb" data-hourly="0.4448">Pro: 8 CPU, 32GB RAM ($0.4448/hr)</option>
+            <!-- Options will be dynamically populated based on computeClass -->
         </select>
 
         <label for="computeHours">Compute Hours/Month (Max 730):</label>
@@ -157,6 +132,193 @@
     </div>
 
     <script>
+        // Initialize the calculator when the document is loaded
+        document.addEventListener('DOMContentLoaded', function () {
+            // Set up event listeners
+            document.getElementById('region').addEventListener('change', updateComputeSizeOptions);
+            document.getElementById('computeClass').addEventListener('change', updateComputeSizeOptions);
+
+            // Add event listeners for all inputs to recalculate
+            const inputs = document.querySelectorAll('select:not(#computeClass):not(#region), input');
+            inputs.forEach(input => {
+                input.addEventListener('change', calculateCost);
+                input.addEventListener('input', calculateCost);
+            });
+
+            // Initialize compute size options on page load
+            updateComputeSizeOptions();
+        });
+
+        // Pricing table per region (hourly rates)
+        const pricingTable = {
+            'us-east-2': { // US – Ohio
+                'flex-1-256': 0.0067,
+                'flex-1-512': 0.0088,
+                'flex-1-1gb': 0.0139,
+                'flex-2-512': 0.0134,
+                'flex-2-1gb': 0.0176,
+                'flex-2-2gb': 0.0278,
+                'flex-4-1gb': 0.0268,
+                'flex-4-2gb': 0.0352,
+                'flex-4-4gb': 0.0556,
+                'flex-8-2gb': 0.0536,
+                'flex-8-4gb': 0.0704,
+                'flex-8-8gb': 0.1112,
+                'pro-1-1gb': 0.0267,
+                'pro-1-2gb': 0.0352,
+                'pro-1-4gb': 0.0556,
+                'pro-2-2gb': 0.0534,
+                'pro-2-4gb': 0.0704,
+                'pro-2-8gb': 0.1112,
+                'pro-4-4gb': 0.1068,
+                'pro-4-8gb': 0.1408,
+                'pro-4-16gb': 0.2224,
+                'pro-8-8gb': 0.2136,
+                'pro-8-16gb': 0.2816,
+                'pro-8-32gb': 0.4448
+            },
+            'eu-central-1': { // EU – Frankfurt
+                'flex-1-256': 0.0076,
+                'flex-1-512': 0.0105,
+                'flex-1-1gb': 0.0168,
+                'flex-2-512': 0.0152,
+                'flex-2-1gb': 0.0210,
+                'flex-2-2gb': 0.0336,
+                'flex-4-1gb': 0.0304,
+                'flex-4-2gb': 0.0420,
+                'flex-4-4gb': 0.0672,
+                'flex-8-2gb': 0.0608,
+                'flex-8-4gb': 0.0840,
+                'flex-8-8gb': 0.1344,
+                'pro-1-1gb': 0.0305,
+                'pro-1-2gb': 0.0422,
+                'pro-1-4gb': 0.0671,
+                'pro-2-2gb': 0.0610,
+                'pro-2-4gb': 0.0844,
+                'pro-2-8gb': 0.1342,
+                'pro-4-4gb': 0.1220,
+                'pro-4-8gb': 0.1688,
+                'pro-4-16gb': 0.2684,
+                'pro-8-8gb': 0.2440,
+                'pro-8-16gb': 0.3376,
+                'pro-8-32gb': 0.5368
+            },
+            'eu-west-2': { // EU – London
+                'flex-1-256': 0.0072,
+                'flex-1-512': 0.0093,
+                'flex-1-1gb': 0.0148,
+                'flex-2-512': 0.0144,
+                'flex-2-1gb': 0.0186,
+                'flex-2-2gb': 0.0296,
+                'flex-4-1gb': 0.0288,
+                'flex-4-2gb': 0.0372,
+                'flex-4-4gb': 0.0592,
+                'flex-8-2gb': 0.0576,
+                'flex-8-4gb': 0.0744,
+                'flex-8-8gb': 0.1184,
+                'pro-1-1gb': 0.0288,
+                'pro-1-2gb': 0.0370,
+                'pro-1-4gb': 0.0594,
+                'pro-2-2gb': 0.0576,
+                'pro-2-4gb': 0.0740,
+                'pro-2-8gb': 0.1188,
+                'pro-4-4gb': 0.1152,
+                'pro-4-8gb': 0.1480,
+                'pro-4-16gb': 0.2376,
+                'pro-8-8gb': 0.2304,
+                'pro-8-16gb': 0.2960,
+                'pro-8-32gb': 0.4752
+            },
+            'ap-southeast-1': { // AP – Singapore
+                'flex-1-256': 0.0070,
+                'flex-1-512': 0.0100,
+                'flex-1-1gb': 0.0152,
+                'flex-2-512': 0.0140,
+                'flex-2-1gb': 0.0200,
+                'flex-2-2gb': 0.0304,
+                'flex-4-1gb': 0.0280,
+                'flex-4-2gb': 0.0400,
+                'flex-4-4gb': 0.0608,
+                'flex-8-2gb': 0.0560,
+                'flex-8-4gb': 0.0800,
+                'flex-8-8gb': 0.1216,
+                'pro-1-1gb': 0.0280,
+                'pro-1-2gb': 0.0400,
+                'pro-1-4gb': 0.0610,
+                'pro-2-2gb': 0.0560,
+                'pro-2-4gb': 0.0800,
+                'pro-2-8gb': 0.1220,
+                'pro-4-4gb': 0.1120,
+                'pro-4-8gb': 0.1600,
+                'pro-4-16gb': 0.2440,
+                'pro-8-8gb': 0.2240,
+                'pro-8-16gb': 0.3200,
+                'pro-8-32gb': 0.4880
+            }
+        };
+
+        // Compute size options based on class
+        const computeSizeOptions = {
+            'flex': [
+                { value: 'flex-1-256', label: '1 CPU, 256MB RAM' },
+                { value: 'flex-1-512', label: '1 CPU, 512MB RAM' },
+                { value: 'flex-1-1gb', label: '1 CPU, 1GB RAM' },
+                { value: 'flex-2-512', label: '2 CPU, 512MB RAM' },
+                { value: 'flex-2-1gb', label: '2 CPU, 1GB RAM' },
+                { value: 'flex-2-2gb', label: '2 CPU, 2GB RAM' },
+                { value: 'flex-4-1gb', label: '4 CPU, 1GB RAM' },
+                { value: 'flex-4-2gb', label: '4 CPU, 2GB RAM' },
+                { value: 'flex-4-4gb', label: '4 CPU, 4GB RAM' },
+                { value: 'flex-8-2gb', label: '8 CPU, 2GB RAM' },
+                { value: 'flex-8-4gb', label: '8 CPU, 4GB RAM' },
+                { value: 'flex-8-8gb', label: '8 CPU, 8GB RAM' }
+            ],
+            'pro': [
+                { value: 'pro-1-1gb', label: '1 CPU, 1GB RAM' },
+                { value: 'pro-1-2gb', label: '1 CPU, 2GB RAM' },
+                { value: 'pro-1-4gb', label: '1 CPU, 4GB RAM' },
+                { value: 'pro-2-2gb', label: '2 CPU, 2GB RAM' },
+                { value: 'pro-2-4gb', label: '2 CPU, 4GB RAM' },
+                { value: 'pro-2-8gb', label: '2 CPU, 8GB RAM' },
+                { value: 'pro-4-4gb', label: '4 CPU, 4GB RAM' },
+                { value: 'pro-4-8gb', label: '4 CPU, 8GB RAM' },
+                { value: 'pro-4-16gb', label: '4 CPU, 16GB RAM' },
+                { value: 'pro-8-8gb', label: '8 CPU, 8GB RAM' },
+                { value: 'pro-8-16gb', label: '8 CPU, 16GB RAM' },
+                { value: 'pro-8-32gb', label: '8 CPU, 32GB RAM' }
+            ]
+        };
+
+        // Map region codes to display names
+        const regionDisplayNames = {
+            'us-east-2': 'US – Ohio',
+            'eu-central-1': 'EU – Frankfurt',
+            'eu-west-2': 'EU – London',
+            'ap-southeast-1': 'AP – Singapore'
+        };
+
+        // Function to update compute size options based on selected compute class
+        function updateComputeSizeOptions() {
+            const computeClass = document.getElementById('computeClass').value;
+            const computeSize = document.getElementById('computeSize');
+            const region = document.getElementById('region').value;
+
+            // Clear current options
+            computeSize.innerHTML = '';
+
+            // Add new options based on selected class
+            computeSizeOptions[computeClass].forEach(option => {
+                const hourlyRate = pricingTable[region][option.value];
+                const optionElement = document.createElement('option');
+                optionElement.value = option.value;
+                optionElement.textContent = `${computeClass === 'flex' ? 'Flex' : 'Pro'}: ${option.label} ($${hourlyRate.toFixed(4)}/hr)`;
+                computeSize.appendChild(optionElement);
+            });
+
+            // Trigger calculation update
+            calculateCost();
+        }
+
         function calculateCost() {
             const region = document.getElementById('region').value;
             const plan = document.getElementById('plan').value;
@@ -165,122 +327,6 @@
             const computeHours = parseFloat(document.getElementById('computeHours').value) || 0;
             const dataOverage = parseFloat(document.getElementById('dataOverage').value) || 0;
             const requestOverage = parseFloat(document.getElementById('requestOverage').value) || 0;
-
-            // Pricing table per region (hourly rates)
-            const pricingTable = {
-                'us-east-2': { // US – Ohio
-                    'flex-1-256': 0.0067,
-                    'flex-1-512': 0.0088,
-                    'flex-1-1gb': 0.0139,
-                    'flex-2-512': 0.0134,
-                    'flex-2-1gb': 0.0176,
-                    'flex-2-2gb': 0.0278,
-                    'flex-4-1gb': 0.0268,
-                    'flex-4-2gb': 0.0352,
-                    'flex-4-4gb': 0.0556,
-                    'flex-8-2gb': 0.0536,
-                    'flex-8-4gb': 0.0704,
-                    'flex-8-8gb': 0.1112,
-                    'pro-1-1gb': 0.0267,
-                    'pro-1-2gb': 0.0352,
-                    'pro-1-4gb': 0.0556,
-                    'pro-2-2gb': 0.0534,
-                    'pro-2-4gb': 0.0704,
-                    'pro-2-8gb': 0.1112,
-                    'pro-4-4gb': 0.1068,
-                    'pro-4-8gb': 0.1408,
-                    'pro-4-16gb': 0.2224,
-                    'pro-8-8gb': 0.2136,
-                    'pro-8-16gb': 0.2816,
-                    'pro-8-32gb': 0.4448
-                },
-                'eu-central-1': { // EU – Frankfurt
-                    'flex-1-256': 0.0076,
-                    'flex-1-512': 0.0105,
-                    'flex-1-1gb': 0.0168,
-                    'flex-2-512': 0.0152,
-                    'flex-2-1gb': 0.0210,
-                    'flex-2-2gb': 0.0336,
-                    'flex-4-1gb': 0.0304,
-                    'flex-4-2gb': 0.0420,
-                    'flex-4-4gb': 0.0672,
-                    'flex-8-2gb': 0.0608,
-                    'flex-8-4gb': 0.0840,
-                    'flex-8-8gb': 0.1344,
-                    'pro-1-1gb': 0.0305,
-                    'pro-1-2gb': 0.0422,
-                    'pro-1-4gb': 0.0671,
-                    'pro-2-2gb': 0.0610,
-                    'pro-2-4gb': 0.0844,
-                    'pro-2-8gb': 0.1342,
-                    'pro-4-4gb': 0.1220,
-                    'pro-4-8gb': 0.1688,
-                    'pro-4-16gb': 0.2684,
-                    'pro-8-8gb': 0.2440,
-                    'pro-8-16gb': 0.3376,
-                    'pro-8-32gb': 0.5368
-                },
-                'eu-west-2': { // EU – London
-                    'flex-1-256': 0.0072,
-                    'flex-1-512': 0.0093,
-                    'flex-1-1gb': 0.0148,
-                    'flex-2-512': 0.0144,
-                    'flex-2-1gb': 0.0186,
-                    'flex-2-2gb': 0.0296,
-                    'flex-4-1gb': 0.0288,
-                    'flex-4-2gb': 0.0372,
-                    'flex-4-4gb': 0.0592,
-                    'flex-8-2gb': 0.0576,
-                    'flex-8-4gb': 0.0744,
-                    'flex-8-8gb': 0.1184,
-                    'pro-1-1gb': 0.0288,
-                    'pro-1-2gb': 0.0370,
-                    'pro-1-4gb': 0.0594,
-                    'pro-2-2gb': 0.0576,
-                    'pro-2-4gb': 0.0740,
-                    'pro-2-8gb': 0.1188,
-                    'pro-4-4gb': 0.1152,
-                    'pro-4-8gb': 0.1480,
-                    'pro-4-16gb': 0.2376,
-                    'pro-8-8gb': 0.2304,
-                    'pro-8-16gb': 0.2960,
-                    'pro-8-32gb': 0.4752
-                },
-                'ap-southeast-1': { // AP – Singapore
-                    'flex-1-256': 0.0070,
-                    'flex-1-512': 0.0100,
-                    'flex-1-1gb': 0.0152,
-                    'flex-2-512': 0.0140,
-                    'flex-2-1gb': 0.0200,
-                    'flex-2-2gb': 0.0304,
-                    'flex-4-1gb': 0.0280,
-                    'flex-4-2gb': 0.0400,
-                    'flex-4-4gb': 0.0608,
-                    'flex-8-2gb': 0.0560,
-                    'flex-8-4gb': 0.0800,
-                    'flex-8-8gb': 0.1216,
-                    'pro-1-1gb': 0.0280,
-                    'pro-1-2gb': 0.0400,
-                    'pro-1-4gb': 0.0610,
-                    'pro-2-2gb': 0.0560,
-                    'pro-2-4gb': 0.0800,
-                    'pro-2-8gb': 0.1220,
-                    'pro-4-4gb': 0.1120,
-                    'pro-4-8gb': 0.1600,
-                    'pro-4-16gb': 0.2440,
-                    'pro-8-8gb': 0.2240,
-                    'pro-8-16gb': 0.3200,
-                    'pro-8-32gb': 0.4880
-                }
-            };
-
-            // Map region codes to display names
-            const regionDisplayNames = {
-                'us-east-2': 'US – Ohio',
-                'eu-central-1': 'EU – Frankfurt',
-                'eu-west-2': 'EU – London',
-                'ap-southeast-1': 'AP – Singapore'
-            };
 
             // Base plan costs
             let baseCost = 0;
@@ -331,16 +377,6 @@
                 <p><strong>Total Monthly Cost: $${totalCost.toFixed(2)}</strong></p>
             `;
         }
-
-        // Add event listeners for auto-calculation
-        const inputs = document.querySelectorAll('select, input');
-        inputs.forEach(input => {
-            input.addEventListener('change', calculateCost);
-            input.addEventListener('input', calculateCost);
-        });
-
-        // Initial calculation on page load
-        window.onload = calculateCost;
     </script>
 </body>
 
